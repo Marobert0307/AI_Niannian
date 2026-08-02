@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  rankContexts,
+  scoreAffectiveProximity,
+  scoreTemporalProximity,
+  scoreTouchFrequency,
+  type AffectCoordinates,
+} from "@/lib/context-ranking";
 
 type MainTab = "create" | "manage";
 type ConfirmSource = "voice" | "text" | "mcp";
@@ -8,9 +15,45 @@ type ContextSession = { kind: "alarm" | "schedule"; title: string; detail: strin
 type AlarmPrompt = ContextSession & { time: string };
 
 const mcpCandidates = [
-  { source: "Teams · 产品晨会", quote: "“我们周五下班前把竞品分析发出来，下周一直接讨论。”", type: "日程", title: "提交竞品分析", time: "周五 18:00" },
-  { source: "微信 · 小余", quote: "“周六中午见？吃饭时正好把周末短途旅行的地方定下来。”", type: "日程", title: "和小余吃午饭", time: "周六 12:30" },
+  {
+    source: "Teams · 产品晨会",
+    quote: "“我们周五下班前把竞品分析发出来，下周一直接讨论。”",
+    type: "日程",
+    title: "提交竞品分析",
+    time: "周五 18:00",
+    memory: { daysSinceActive: 0.2, valence: 0.55, arousal: 0.72, activationCount: 4 },
+    relevance: { semantic: 0.92, lexical: 0.86, unresolved: 0.95, promise: 0.98, graph: 0.8 },
+  },
+  {
+    source: "微信 · 小余",
+    quote: "“周六中午见？吃饭时正好把周末短途旅行的地方定下来。”",
+    type: "日程",
+    title: "和小余吃午饭",
+    time: "周六 12:30",
+    memory: { daysSinceActive: 0.7, valence: 0.75, arousal: 0.55, activationCount: 2 },
+    relevance: { semantic: 0.78, lexical: 0.7, unresolved: 0.85, promise: 0.72, graph: 0.65 },
+  },
 ];
+
+const currentAffect: AffectCoordinates = { valence: 0.58, arousal: 0.68 };
+
+const rankedMcpCandidateIds = rankContexts(
+  mcpCandidates.map((candidate, index) => ({
+    item: index,
+    features: {
+      semanticSimilarity: candidate.relevance.semantic,
+      lexicalSimilarity: candidate.relevance.lexical,
+      temporalProximity: scoreTemporalProximity(candidate.memory.daysSinceActive),
+      affectiveProximity: scoreAffectiveProximity(currentAffect, candidate.memory),
+      unresolvedRelevance: candidate.relevance.unresolved,
+      promiseRelevance: candidate.relevance.promise,
+      graphNeighborRelevance: Math.max(
+        candidate.relevance.graph,
+        scoreTouchFrequency(candidate.memory.activationCount),
+      ),
+    },
+  })),
+).map(({ item }) => item);
 
 const days = [
   { week: "一", date: 3 }, { week: "二", date: 4 }, { week: "三", date: 5 },
@@ -45,7 +88,7 @@ export default function Home() {
   const [contextSession, setContextSession] = useState<ContextSession | null>(null);
   const [contextReply, setContextReply] = useState(false);
   const [sharedContext, setSharedContext] = useState<string | null>(null);
-  const [mcpRemaining, setMcpRemaining] = useState([0, 1]);
+  const [mcpRemaining, setMcpRemaining] = useState(() => rankedMcpCandidateIds);
   const [alarmPrompt, setAlarmPrompt] = useState<AlarmPrompt | null>(null);
 
   useEffect(() => {
@@ -120,14 +163,6 @@ export default function Home() {
     setAlarmPrompt(prompt);
   }
 
-  function snoozeAlarm(prompt: AlarmPrompt) {
-    setAlarmPrompt(null);
-    setSavedTitle("已延迟 15 分钟");
-    setSavedLabel(`${prompt.time} → 07:45 · ${prompt.title}`);
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 2300);
-  }
-
   return (
     <main className="stage">
       <div className="stage-glow glow-one" /><div className="stage-glow glow-two" />
@@ -173,7 +208,7 @@ export default function Home() {
             <button className={tab === "manage" ? "active" : ""} onClick={() => setTab("manage")}><span className="list-icon"><i /><i /><i /></span><em>日程</em></button>
           </nav>
 
-          {alarmPrompt && <AlarmDropAlert prompt={alarmPrompt} delay={() => snoozeAlarm(alarmPrompt)} close={() => setAlarmPrompt(null)} enter={() => startContext(alarmPrompt)} />}
+          {alarmPrompt && <AlarmDropAlert prompt={alarmPrompt} hangup={() => setAlarmPrompt(null)} answer={() => startContext(alarmPrompt)} />}
           {saved && <div className="saved"><span>✓</span><div><strong>{savedTitle}</strong><small>{savedLabel}</small></div></div>}
           {sharedContext && <div className="share-toast"><span>↗</span><div><strong>上下文链接已生成</strong><small>niannian.link/context/7K2A · {sharedContext}</small></div></div>}
         </div>
@@ -184,20 +219,19 @@ export default function Home() {
   );
 }
 
-function AlarmDropAlert({ prompt, delay, close, enter }: { prompt: AlarmPrompt; delay: () => void; close: () => void; enter: () => void }) {
+function AlarmDropAlert({ prompt, hangup, answer }: { prompt: AlarmPrompt; hangup: () => void; answer: () => void }) {
   return (
-    <div className="alarm-alert-layer" role="presentation" onClick={close}>
-      <section className="alarm-drop-alert" role="dialog" aria-label={`${prompt.title} 闹钟提醒`} onClick={(event) => event.stopPropagation()}>
-        <div className="alarm-alert-top">
-          <span>闹钟</span>
+    <div className="alarm-alert-layer" role="presentation" onClick={hangup}>
+      <section className="alarm-drop-alert incoming-agent-call" role="dialog" aria-label={`WAKIE 来电：${prompt.title}`} onClick={(event) => event.stopPropagation()}>
+        <div className="call-identity">
+          <div className="agent-call-avatar"><span>W</span><i /></div>
+          <div><small>WAKIE</small><strong>来电中</strong></div>
           <time>{prompt.time}</time>
         </div>
-        <strong>{prompt.title}</strong>
-        <p>{prompt.detail}</p>
+        <div className="call-context"><small>携带闹钟上下文</small><strong>{prompt.title}</strong><p>{prompt.detail}</p></div>
         <footer>
-          <button className="alert-action-delay" onClick={delay}>延迟 15min</button>
-          <button className="alert-action-close" onClick={close}>关闭</button>
-          <button className="alert-action-primary" onClick={enter}>念念</button>
+          <button className="call-action call-hangup" onClick={hangup}><span>☎</span><em>挂断</em></button>
+          <button className="call-action call-answer" onClick={answer}><span>☎</span><em>接通</em></button>
         </footer>
       </section>
     </div>

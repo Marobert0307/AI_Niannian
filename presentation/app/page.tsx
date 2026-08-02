@@ -67,7 +67,7 @@ export default function Home() {
         <div className="hero-copy">
           <div className="timecode">00:00—00:25 · 先说结论</div>
           <p className="super">我们用什么，解决什么？</p>
-          <h1>我们用一个<span>有记忆的个人 Agent</span>，<br />解决 To-do <em>没有上下文</em>的问题。</h1>
+          <h1>我们用一个<span>记忆 Agent</span>，<br />解决 To-do <em>没有上下文</em>的问题。</h1>
           <p className="hero-lead">今天的提醒工具只告诉你“要做什么”；我们让 AI 同时知道<span>为什么做、之前发生了什么、现在怎样帮你行动。</span></p>
           <div className="formula"><b>TO-DO</b><i>+</i><b>CONTEXT</b><i>+</i><b>RIGHT MOMENT</b><strong>= 能推动行动的 AI</strong></div>
           <div className="hero-values">
@@ -157,7 +157,7 @@ export default function Home() {
       <section className="closing section" id="closing">
         <div className="closing-time">02:45—03:00 · 最后只留一句</div>
         <p>THE ONE-LINE PITCH</p>
-        <h2>一个以记忆 Agent 为核心，<br />让上下文优雅流入时间的产品。</h2>
+        <h2>一个会在正确时间，<br />带着正确上下文回来找你的 Agent。</h2>
         <div className="final-values">
           <span>更少重复解释</span><i>×</i><span>更快进入状态</span><i>×</i><span>更容易真正行动</span>
         </div>
