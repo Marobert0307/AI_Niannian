@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./overrides.css";
 
 export const metadata: Metadata = {
   title: "WAKIE — 让上下文在正确的时间回来",

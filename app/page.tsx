@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 type MainTab = "create" | "manage";
 type ConfirmSource = "voice" | "text" | "mcp";
 type ContextSession = { kind: "alarm" | "schedule"; title: string; detail: string };
+type AlarmPrompt = ContextSession & { time: string };
 
 const mcpCandidates = [
   { source: "Teams · 产品晨会", quote: "“我们周五下班前把竞品分析发出来，下周一直接讨论。”", type: "日程", title: "提交竞品分析", time: "周五 18:00" },
@@ -38,12 +39,14 @@ export default function Home() {
   const [text, setText] = useState("");
   const [confirmSource, setConfirmSource] = useState<ConfirmSource | null>(null);
   const [saved, setSaved] = useState(false);
+  const [savedTitle, setSavedTitle] = useState("已创建");
   const [savedLabel, setSavedLabel] = useState("明天 07:30 · 晨跑 5 公里");
   const [selectedDate, setSelectedDate] = useState(7);
   const [contextSession, setContextSession] = useState<ContextSession | null>(null);
   const [contextReply, setContextReply] = useState(false);
   const [sharedContext, setSharedContext] = useState<string | null>(null);
   const [mcpRemaining, setMcpRemaining] = useState([0, 1]);
+  const [alarmPrompt, setAlarmPrompt] = useState<AlarmPrompt | null>(null);
 
   useEffect(() => {
     const appear = window.setTimeout(() => setConfirmSource("mcp"), 1200);
@@ -93,11 +96,13 @@ export default function Home() {
     setSavedLabel(candidate ? `${candidate.time} · ${candidate.title}` : "明天 07:30 · 晨跑 5 公里");
     if (confirmSource === "mcp") removeMcpCandidate(activeIndex);
     else setConfirmSource(null);
+    setSavedTitle("已创建");
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2300);
   }
 
   function startContext(session: ContextSession) {
+    setAlarmPrompt(null);
     setConfirmSource(null);
     setShowText(false);
     setRecording(false);
@@ -109,6 +114,18 @@ export default function Home() {
   function shareContext(title: string) {
     setSharedContext(title);
     window.setTimeout(() => setSharedContext(null), 2800);
+  }
+
+  function openAlarmPrompt(prompt: AlarmPrompt) {
+    setAlarmPrompt(prompt);
+  }
+
+  function snoozeAlarm(prompt: AlarmPrompt) {
+    setAlarmPrompt(null);
+    setSavedTitle("已延迟 15 分钟");
+    setSavedLabel(`${prompt.time} → 07:45 · ${prompt.title}`);
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2300);
   }
 
   return (
@@ -145,6 +162,7 @@ export default function Home() {
                 selectedDate={selectedDate}
                 setSelectedDate={setSelectedDate}
                 startContext={startContext}
+                openAlarmPrompt={openAlarmPrompt}
                 shareContext={shareContext}
               />
             )}
@@ -155,13 +173,34 @@ export default function Home() {
             <button className={tab === "manage" ? "active" : ""} onClick={() => setTab("manage")}><span className="list-icon"><i /><i /><i /></span><em>日程</em></button>
           </nav>
 
-          {saved && <div className="saved"><span>✓</span><div><strong>已创建</strong><small>{savedLabel}</small></div></div>}
+          {alarmPrompt && <AlarmDropAlert prompt={alarmPrompt} delay={() => snoozeAlarm(alarmPrompt)} close={() => setAlarmPrompt(null)} enter={() => startContext(alarmPrompt)} />}
+          {saved && <div className="saved"><span>✓</span><div><strong>{savedTitle}</strong><small>{savedLabel}</small></div></div>}
           {sharedContext && <div className="share-toast"><span>↗</span><div><strong>上下文链接已生成</strong><small>niannian.link/context/7K2A · {sharedContext}</small></div></div>}
         </div>
       </section>
 
       <aside className="side-copy"><span>念念 · PRODUCT PROTOTYPE</span><h1>记住你的念头，<br />陪你把它做成。</h1><p>从一句话、一个日程，到真正开始行动。念念会带着当时的上下文，在你需要的时候继续和你聊。</p></aside>
     </main>
+  );
+}
+
+function AlarmDropAlert({ prompt, delay, close, enter }: { prompt: AlarmPrompt; delay: () => void; close: () => void; enter: () => void }) {
+  return (
+    <div className="alarm-alert-layer" role="presentation" onClick={close}>
+      <section className="alarm-drop-alert" role="dialog" aria-label={`${prompt.title} 闹钟提醒`} onClick={(event) => event.stopPropagation()}>
+        <div className="alarm-alert-top">
+          <span>闹钟</span>
+          <time>{prompt.time}</time>
+        </div>
+        <strong>{prompt.title}</strong>
+        <p>{prompt.detail}</p>
+        <footer>
+          <button className="alert-action-delay" onClick={delay}>延迟 15min</button>
+          <button className="alert-action-close" onClick={close}>关闭</button>
+          <button className="alert-action-primary" onClick={enter}>念念</button>
+        </footer>
+      </section>
+    </div>
   );
 }
 
@@ -238,9 +277,9 @@ function ConfirmCard({ source, candidateIds, close, ignore, confirm }: { source:
   );
 }
 
-function ManagePage({ selectedDate, setSelectedDate, startContext, shareContext }: {
+function ManagePage({ selectedDate, setSelectedDate, startContext, openAlarmPrompt, shareContext }: {
   selectedDate: number; setSelectedDate: (day: number) => void;
-  startContext: (session: ContextSession) => void; shareContext: (title: string) => void;
+  startContext: (session: ContextSession) => void; openAlarmPrompt: (prompt: AlarmPrompt) => void; shareContext: (title: string) => void;
 }) {
   const [alarmOn, setAlarmOn] = useState(true);
   const regularPlans = plans[selectedDate] ?? [];
@@ -264,8 +303,8 @@ function ManagePage({ selectedDate, setSelectedDate, startContext, shareContext 
         {selectedDate === 7 && (
           <article className={`agenda-item alarm-item ${alarmOn ? "" : "alarm-disabled"}`}>
             <time>07:30</time><i className="type-line" />
-            <div className="item-copy"><div className="item-kind-row"><span className="type-tag alarm-tag">↻ 周期闹钟</span><button className={`alarm-power ${alarmOn ? "on" : ""}`} aria-label={alarmOn ? "关闭周期闹钟" : "开启周期闹钟"} aria-pressed={alarmOn} onClick={() => setAlarmOn((value) => !value)}><span className="power-track"><i /></span><em>{alarmOn ? "开启" : "关闭"}</em></button></div><strong>晨跑 5 公里</strong><small>每周一、三、五 · 铃声后由念念陪你起床</small></div>
-            <div className="item-actions"><button onClick={() => startContext({ kind: "alarm", title: "晨跑 5 公里", detail: "你正在准备第一次半马。只要穿上鞋出门，就已经完成一半。" })}>念念</button><button onClick={() => shareContext("晨跑 5 公里")}>分享</button></div>
+            <div className="item-copy"><div className="item-kind-row"><span className="type-tag alarm-tag">↻ 周期闹钟</span><button className={`alarm-power ${alarmOn ? "on" : ""}`} aria-label={alarmOn ? "关闭周期闹钟" : "开启周期闹钟"} aria-pressed={alarmOn} onClick={() => setAlarmOn((value) => !value)}><span className="power-track"><i /></span><em>{alarmOn ? "开启" : "关闭"}</em></button></div><strong>徐汇体育馆游泳</strong><small>从“躺平”中唤醒，动身前往</small></div>
+            <div className="item-actions"><button onClick={() => openAlarmPrompt({ kind: "alarm", title: "徐汇体育馆游泳", time: "07:30", detail: "从“躺平”中唤醒，动身前往" })}>念念</button><button onClick={() => shareContext("徐汇体育馆游泳")}>分享</button></div>
           </article>
         )}
         {regularPlans.map((item) => (

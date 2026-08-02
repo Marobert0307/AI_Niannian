@@ -3,193 +3,175 @@
 import { useEffect, useState } from "react";
 
 const chapters = [
-  { id: "vision", label: "WHY" },
-  { id: "architecture", label: "SYSTEM" },
-  { id: "memory", label: "MEMORY" },
-  { id: "scenes", label: "SCENES" },
-  { id: "value", label: "VALUE" },
+  { id: "answer", label: "结论" },
+  { id: "scenarios", label: "场景" },
+  { id: "system", label: "架构" },
+  { id: "closing", label: "价值" },
 ];
 
-const layers = [
-  { no: "01", tag: "ENTRY", title: "日常 AI 入口", desc: "Codex · Claude Code · 任意 MCP Client", detail: "用户仍在熟悉的工具里工作，不需要迁移习惯。上下文通过 MCP 被自然带入每一次新对话。", tone: "blue" },
-  { no: "02", tag: "BRAIN", title: "Context Server", desc: "记忆存储 · 召回管理 · Personal Agent", detail: "把经历整理成可检索的记忆，计算情绪、重要度与遗忘度，并决定此刻应该想起什么。", tone: "violet" },
-  { no: "03", tag: "SOURCE", title: "你的电脑", desc: "Spec.md · 原始材料 · 可直接编辑", detail: "Markdown 是记忆的可读真相源。你可以随时审阅、修正或补充，而不是把人生锁进黑箱数据库。", tone: "amber" },
-  { no: "04", tag: "MOMENT", title: "时间交互 Demo", desc: "闹钟 · 日程 · 手机语音 · 上下文链接", detail: "当某个时刻到来，产品主动把相关上下文送回来：不是提醒一件事，而是帮你重新进入那件事。", tone: "coral" },
-];
-
-const memorySteps = [
-  { label: "写入", title: "发生过什么", text: "对话、承诺、情绪和理由先保留原文，再形成记忆条目。" },
-  { label: "理解", title: "它对你意味着什么", text: "用效价 × 唤醒度、重要度、未解决状态理解记忆。" },
-  { label: "衰减", title: "自然淡去", text: "低活跃记忆逐渐下沉；情绪强、反复出现的经历保留更久。" },
-  { label: "召回", title: "在此刻浮现", text: "结合语义、关键词、时间与当前任务，返回最相关的少量上下文。" },
-];
-
-const scenes = [
+const scenarios = [
   {
-    id: "alarm", index: "01", kicker: "07:30 / CONTEXTUAL ALARM", title: "不是把你叫醒，\n而是把「为什么」叫醒。",
-    body: "闹钟响起时，Agent 不只说“该跑步了”。它知道你为什么开始、昨天为什么放弃，也知道今天怎样开口最有用。",
-    quote: "“你不是要完成五公里。先穿上鞋，下楼走两分钟——这是你昨晚答应自己的最小一步。”",
-    chips: ["目标上下文", "个性化语音", "动态 motivation"], color: "mint"
+    id: "alarm", time: "07:30", label: "AI 闹钟", color: "green",
+    headline: "不是提醒你起床，\n而是帮你找回行动的理由。",
+    pain: "普通闹钟只知道时间，不知道你为什么设下它。",
+    context: "你的目标、昨晚的承诺、过去几次放弃的原因。",
+    value: "AI 用最适合此刻的语气和最小行动，提供真正个性化的 motivation。",
+    response: "先不用跑五公里。穿上鞋、下楼走两分钟——这是你昨晚答应自己的最小一步。",
+    tags: ["目标上下文", "动态语音", "Motivation"]
   },
   {
-    id: "calendar", index: "02", kicker: "15:00 / CALENDAR", title: "日程不是时间格子，\n是上下文的入口。",
-    body: "进入会议、写作或讨论前，一键拉起对应上下文。无需重新解释背景，AI 从上次停下的位置继续。",
-    quote: "“已带入产品方向讨论：上次确定了三类用户，仍未解决的是记忆授权边界。”",
-    chips: ["一键进入", "跨会话连续", "少重复输入"], color: "sand"
+    id: "life", time: "周六", label: "生活日程", color: "sand",
+    headline: "想出去玩时，\n不用从零向 AI 解释一遍。",
+    pain: "朋友约出游时，地点偏好、预算和以前聊过的方案散落在不同窗口。",
+    context: "同行的人、预算、偏好、收藏的链接和上次没有决定的选项。",
+    value: "点开日程就直接进入讨论，AI 可以马上比较路线、补全计划并生成下一步。",
+    response: "你们上次留下了莫干山和安吉两个方案。按小余不想自驾、预算 800 元，安吉更合适。",
+    tags: ["生活决策", "快速讨论", "链接归档"]
   },
   {
-    id: "handoff", index: "03", kicker: "ANYWHERE / HANDOFF", title: "上下文跟着你走，\n不跟着窗口消失。",
-    body: "在手机上直接语音补充，也可以生成一个上下文链接，交给另一个 AI 窗口、同事或未来的自己。",
-    quote: "“这个链接不是一份聊天记录，而是一份为下一次行动整理好的上下文。”",
-    chips: ["手机语音", "上下文链接", "跨端接力"], color: "lavender"
-  },
+    id: "work", time: "15:00", label: "工作日程", color: "purple",
+    headline: "复杂工作不是重新开聊，\n而是从真正的断点继续。",
+    pain: "会议、代码、文档和决策背景太多，每个新窗口都要重新同步。",
+    context: "项目 Spec、历史决策、相关对话、待解决问题和最新修改。",
+    value: "日程成为上下文入口：一键带入大量材料，在 Codex 或 Claude Code 中继续工作。",
+    response: "已带入 Context OS 方向会：三类用户已确定，当前未解决的是记忆授权边界。",
+    tags: ["大量上下文", "MCP 接入", "跨窗口连续"]
+  }
 ];
 
 export default function Home() {
-  const [active, setActive] = useState("vision");
+  const [active, setActive] = useState("answer");
   const [scene, setScene] = useState(0);
-  const [layer, setLayer] = useState(0);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (visible?.target.id) setActive(visible.target.id);
-    }, { rootMargin: "-35% 0px -55%", threshold: [0, .2, .6] });
-    chapters.forEach(({ id }) => { const node = document.getElementById(id); if (node) observer.observe(node); });
+      const current = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (current?.target.id) setActive(current.target.id);
+    }, { rootMargin: "-35% 0px -55%", threshold: [0, .25, .6] });
+    chapters.forEach(({ id }) => { const el = document.getElementById(id); if (el) observer.observe(el); });
     return () => observer.disconnect();
   }, []);
 
   const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const current = scenarios[scene];
 
   return (
     <main>
       <header className="topbar">
-        <button className="wordmark" onClick={() => go("vision")}><i />WAKIE <span>/ CONTEXT OS</span></button>
-        <nav aria-label="演讲章节">
-          {chapters.map((item, index) => <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => go(item.id)}><small>0{index + 1}</small>{item.label}</button>)}
-        </nav>
-        <div className="deck-meta"><span>PRODUCT STORY</span><b>2026</b></div>
+        <button className="brand" onClick={() => go("answer")}><i />WAKIE <span>CONTEXTUAL TO-DO</span></button>
+        <nav aria-label="三分钟演讲章节">{chapters.map((item, index) => <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => go(item.id)}><small>0{index + 1}</small>{item.label}</button>)}</nav>
+        <div className="timer"><i />03:00 PITCH</div>
       </header>
 
-      <section className="hero section" id="vision">
-        <div className="hero-grain" />
-        <div className="eyebrow"><span>CONTEXT-AWARE PERSONAL AGENT</span><i /></div>
-        <h1>让 AI 记得你，<br />也记得<span>什么时候</span><br />该想起你。</h1>
-        <div className="hero-bottom">
-          <p>我们不是在做一个更聪明的提醒工具。<br />我们在做一层<span>有情感、有遗忘、与时间相连的个人上下文。</span></p>
-          <button className="round-cta" onClick={() => go("architecture")} aria-label="查看系统架构"><span>↓</span><small>SCROLL TO<br />THE SYSTEM</small></button>
-        </div>
-        <div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" />
-        <div className="hero-note note-a"><b>REMEMBER</b><span>被理解的过去</span></div>
-        <div className="hero-note note-b"><b>MOMENT</b><span>恰好到来的现在</span></div>
-      </section>
-
-      <section className="section architecture" id="architecture">
-        <header className="section-head">
-          <div><span className="section-no">01</span><p>THE SYSTEM</p></div>
-          <h2>四个部分，一条不断裂的<br /><em>上下文链路</em></h2>
-          <p className="section-intro">从日常 AI 工具出发，经过个人记忆中枢，落回可编辑的原始文档，最终在具体时刻被产品重新唤起。</p>
-        </header>
-
-        <div className="flow" aria-label="四层产品架构图">
-          <div className="flow-line" />
-          {layers.map((item, index) => (
-            <button key={item.no} className={`flow-card ${item.tone} ${layer === index ? "selected" : ""}`} onMouseEnter={() => setLayer(index)} onFocus={() => setLayer(index)} onClick={() => setLayer(index)}>
-              <span className="flow-no">{item.no}</span>
-              <i className="flow-node" />
-              <small>{item.tag}</small>
-              <strong>{item.title}</strong>
-              <p>{item.desc}</p>
-              {index < layers.length - 1 && <b className="flow-arrow">→</b>}
-            </button>
-          ))}
-        </div>
-        <div className="layer-detail"><span>{layers[layer].no}</span><p>{layers[layer].detail}</p><small>点击上方模块查看</small></div>
-
-        <div className="loop-band">
-          <span>CAPTURE</span><i>→</i><span>UNDERSTAND</span><i>→</i><span>REMEMBER</span><i>→</i><span>RETURN AT THE RIGHT MOMENT</span>
-        </div>
-      </section>
-
-      <section className="section memory" id="memory">
-        <div className="memory-top">
-          <header className="section-head inverse">
-            <div><span className="section-no">02</span><p>THE MEMORY</p></div>
-            <h2>记忆不是数据库。<br />它应该像人一样，<em>有轻重。</em></h2>
-          </header>
-          <p className="memory-lead">参考 Ombre-Brain 的情绪记忆思路，并针对“时间交互”重构：让记忆不仅可被查询，还能在一个时刻主动回来。</p>
-        </div>
-
-        <div className="memory-grid">
-          <div className="emotion-map">
-            <div className="axis y"><span>高唤醒</span><span>低唤醒</span></div><div className="axis x"><span>负效价</span><span>正效价</span></div>
-            <div className="map-ring ring-1" /><div className="map-ring ring-2" />
-            <button className="memory-dot dot-1"><i /><span>第一次公开演讲<br /><small>紧张 · 重要</small></span></button>
-            <button className="memory-dot dot-2"><i /><span>晨跑后的轻松<br /><small>平静 · 积极</small></span></button>
-            <button className="memory-dot dot-3"><i /><span>搁置的产品决定<br /><small>未解决 · 反复出现</small></span></button>
-            <div className="map-center">情绪坐标<br /><small>VALENCE × AROUSAL</small></div>
-          </div>
-
-          <div className="memory-process">
-            {memorySteps.map((item, index) => <article key={item.label}>
-              <span>0{index + 1}</span><div><small>{item.label}</small><strong>{item.title}</strong><p>{item.text}</p></div>
-            </article>)}
+      <section className="hero" id="answer">
+        <div className="hero-copy">
+          <div className="timecode">00:00—00:25 · 先说结论</div>
+          <p className="super">我们用什么，解决什么？</p>
+          <h1>我们用一个<span>有记忆的个人 Agent</span>，<br />解决 To-do <em>没有上下文</em>的问题。</h1>
+          <p className="hero-lead">今天的提醒工具只告诉你“要做什么”；我们让 AI 同时知道<span>为什么做、之前发生了什么、现在怎样帮你行动。</span></p>
+          <div className="formula"><b>TO-DO</b><i>+</i><b>CONTEXT</b><i>+</i><b>RIGHT MOMENT</b><strong>= 能推动行动的 AI</strong></div>
+          <div className="hero-values">
+            <article><span>01</span><strong>记得</strong><p>跨窗口保存事实、理由与情绪</p></article>
+            <article><span>02</span><strong>理解</strong><p>知道此刻需要提醒、讨论还是执行</p></article>
+            <article><span>03</span><strong>行动</strong><p>在闹钟与日程中把上下文送回来</p></article>
           </div>
         </div>
-
-        <div className="memory-principles">
-          <article><span>01</span><strong>情感是坐标，<br />不是“开心/难过”的标签</strong></article>
-          <article><span>02</span><strong>遗忘是淡去，<br />不是粗暴删除</strong></article>
-          <article><span>03</span><strong>原文是可读的 Markdown，<br />不是不可控的黑箱</strong></article>
+        <div className="hero-demo">
+          <div className="demo-label"><span>LIVE PRODUCT FRONTEND</span><i>NOW</i></div>
+          <Phone mode="alarm" compact />
+          <div className="context-capsule cap-a"><small>WHY</small><b>第一次半马</b></div>
+          <div className="context-capsule cap-b"><small>LAST NIGHT</small><b>先下楼两分钟</b></div>
+          <div className="context-capsule cap-c"><small>NOW</small><b>需要 motivation</b></div>
         </div>
+        <button className="next" onClick={() => go("scenarios")}>三个场景，快速说清价值 <span>↓</span></button>
       </section>
 
-      <section className="section scenes" id="scenes">
+      <section className="scenarios section" id="scenarios">
         <header className="section-head">
-          <div><span className="section-no">03</span><p>THE MOMENTS</p></div>
-          <h2>当上下文遇到时间，<br /><em>提醒变成了陪伴。</em></h2>
+          <div><span>00:20—01:15</span><small>VALUE FIRST</small></div>
+          <h2>同一个“带上下文的 To-do”，<br />在不同场景里产生<em>不同价值。</em></h2>
         </header>
-
         <div className="scene-tabs" role="tablist">
-          {scenes.map((item, index) => <button role="tab" aria-selected={scene === index} className={scene === index ? "active" : ""} onClick={() => setScene(index)} key={item.id}><span>{item.index}</span>{item.id === "alarm" ? "AI 闹钟" : item.id === "calendar" ? "上下文日程" : "跨端接力"}</button>)}
+          {scenarios.map((item, index) => <button key={item.id} role="tab" aria-selected={scene === index} className={scene === index ? "active" : ""} onClick={() => setScene(index)}><span>0{index + 1}</span><strong>{item.label}</strong><small>{item.time}</small></button>)}
         </div>
-
-        <article className={`scene-stage ${scenes[scene].color}`}>
-          <div className="scene-copy">
-            <small>{scenes[scene].kicker}</small>
-            <h3>{scenes[scene].title.split("\n").map((line) => <span key={line}>{line}</span>)}</h3>
-            <p>{scenes[scene].body}</p>
-            <div className="chips">{scenes[scene].chips.map((chip) => <span key={chip}>{chip}</span>)}</div>
+        <article className={`scene-panel ${current.color}`}>
+          <div className="scene-story">
+            <span className="scene-kicker">{current.time} / {current.label}</span>
+            <h3>{current.headline.split("\n").map(line => <span key={line}>{line}</span>)}</h3>
+            <div className="logic-row"><small>痛点</small><p>{current.pain}</p></div>
+            <div className="logic-row"><small>带入</small><p>{current.context}</p></div>
+            <div className="logic-row value-row"><small>价值</small><p>{current.value}</p></div>
+            <div className="tags">{current.tags.map(tag => <span key={tag}>{tag}</span>)}</div>
           </div>
-          <div className="phone-shell" aria-label={`${scenes[scene].id} 产品场景示意`}>
-            <div className="phone-island" />
-            {scene === 0 && <div className="phone-content alarm-ui"><div className="ui-top"><span>7:30</span><small>8月7日 · 星期五</small></div><div className="voice-core"><i /><i /><i /><i /><i /></div><strong>早上好，Maro。</strong><p>{scenes[scene].quote}</p><button>我起来了 <span>→</span></button></div>}
-            {scene === 1 && <div className="phone-content calendar-ui"><div className="mini-head"><small>AUGUST / TODAY</small><b>···</b></div><h4>今天</h4><div className="day-strip"><span>三<small>5</small></span><span>四<small>6</small></span><span className="today">五<small>7</small></span><span>六<small>8</small></span></div><article><time>15:00</time><div><small>产品讨论</small><strong>Context OS 方向会</strong><p>3 条记忆 · 1 个未解决问题</p></div></article><button>带着上下文进入 <span>→</span></button></div>}
-            {scene === 2 && <div className="phone-content handoff-ui"><div className="mini-head"><small>CONTEXT HANDOFF</small><b>×</b></div><div className="link-orb">↗</div><h4>上下文已准备好</h4><p>产品演讲 / 当前版本</p><div className="link-box"><span>wakie.ai/c/7K2A</span><button>复制</button></div><ul><li><i />12 条相关记忆</li><li><i />3 份原始文档</li><li><i />有效期：24 小时</li></ul><button className="share-btn">分享给另一个窗口</button></div>}
-          </div>
-          <blockquote><span>“</span><p>{scenes[scene].quote.replaceAll("“", "").replaceAll("”", "")}</p></blockquote>
+          <div className="scene-phone"><Phone mode={current.id} /><blockquote><span>AI</span><p>{current.response}</p></blockquote></div>
         </article>
+        <div className="scene-conclusion"><b>前端负责把上下文变成“此刻可用”</b><span>→</span><p>闹钟负责督促，日程负责开启讨论，工作场景则可以<span>直接进入 Agent 或用问答补全细节。</span></p></div>
       </section>
 
-      <section className="section value" id="value">
-        <header className="section-head inverse">
-          <div><span className="section-no">04</span><p>THE VALUE</p></div>
-          <h2>我们减少的不是点击，<br />而是每次重新开始的<em>心理摩擦。</em></h2>
+      <section className="layers section" id="layers">
+        <header className="section-head">
+          <div><span>01:15—01:45</span><small>THREE LAYERS</small></div>
+          <h2>用户看到的是时间与交互，<br />背后才是<em>上下文管控。</em></h2>
         </header>
-        <div className="value-grid">
-          <article><span>01</span><div className="value-icon">↗</div><h3>更快进入状态</h3><p>不用反复复制背景、解释目标。每次打开 AI，都从真正的断点继续。</p></article>
-          <article><span>02</span><div className="value-icon">◎</div><h3>更像你的 Agent</h3><p>它理解的不只是事实，还有你的犹豫、动力、承诺与情绪重量。</p></article>
-          <article><span>03</span><div className="value-icon">⌁</div><h3>从建议走向行动</h3><p>上下文不再沉睡在聊天记录里，而是在日程和闹钟中主动抵达。</p></article>
-          <article><span>04</span><div className="value-icon">◇</div><h3>可见、可控、可带走</h3><p>原始记忆保存在可编辑文档中，用户拥有修正权，也拥有迁移权。</p></article>
+        <div className="layer-stack">
+          <article className="layer-top"><div><span>03</span><small>用户强感知</small></div><h3>带着上下文，快速交互</h3><p>语音问答 · 和朋友讨论 · 进入 Codex / Claude Code · 分享上下文链接</p><b>INTERACT</b></article>
+          <article className="layer-middle"><div><span>02</span><small>用户强感知</small></div><h3>上下文与时间绑定</h3><p>闹钟带回动力与承诺；日程带回攻略、材料、决策和未解决问题</p><b>TIME</b></article>
+          <article className="layer-bottom"><div><span>01</span><small>用户基本无感</small></div><h3>合理管控上下文</h3><p>Agent 在后台持续整理、检索、衰减、浮现，并保持原文可编辑</p><b>MEMORY AGENT</b></article>
+        </div>
+        <p className="layer-note">讲述顺序：<strong>从上往下</strong>，先说用户价值；产品运行顺序：<strong>从下往上</strong>，由记忆 Agent 支撑时间与交互。</p>
+      </section>
+
+      <section className="system section" id="system">
+        <header className="section-head inverse">
+          <div><span>01:45—02:45</span><small>AGENT & SYSTEM</small></div>
+          <h2>主角是记忆 Agent，<br />四个部分围绕它<em>持续双向更新。</em></h2>
+        </header>
+
+        <div className="system-map" aria-label="Context OS 四部分双向架构图">
+          <div className="map-orbit orbit-a" /><div className="map-orbit orbit-b" />
+          <div className="connector con-client"><span>对话 / 召回 ↔</span></div>
+          <div className="connector con-computer"><span>读取 / 修改 ↔</span></div>
+          <div className="connector con-product"><span>录入 / 触发 ↔</span></div>
+          <article className="sys-node clients"><div className="node-icon">⌘</div><small>01 · AI CLIENTS</small><h3>Codex / Claude Code</h3><p>日常对话与工作入口。通过 MCP 读取记忆，也把新经历写回。</p><div><span>CHAT</span><span>MCP</span><span>WORK</span></div></article>
+          <article className="sys-node computer"><div className="node-icon">▱</div><small>03 · YOUR COMPUTER</small><h3>Spec.md / 原始文档</h3><p>用户直接查看、编辑上下文真相源；Agent 同步最新修改。</p><div><span>EDIT</span><span>FILES</span><span>CONTROL</span></div></article>
+          <article className="sys-node product"><div className="node-icon">◉</div><small>04 · PRODUCT FRONTEND</small><h3>手机 / 闹钟 / 日程</h3><p>既是输出端，也是录入端：语音、链接和日程会继续生成上下文。</p><div><span>VOICE IN</span><span>TIME</span><span>SHARE</span></div></article>
+          <article className="brain"><small>02 · CONTEXT SERVER</small><div className="brain-core"><i /><strong>PERSONAL<br />AGENT</strong></div><h3>记忆与决策中枢</h3><p>存储 · 检索 · 遗忘 · 情绪 · Agent</p></article>
         </div>
 
-        <div className="closing">
-          <p>THE ONE-LINE PITCH</p>
-          <h2>一个会在正确时间，<br />带着正确上下文回来找你的 AI。</h2>
-          <div><span>CONTEXT</span><i>×</i><span>EMOTION</span><i>×</i><span>TIME</span></div>
-          <button onClick={() => go("vision")}>回到开场 ↑</button>
+        <div className="system-note"><b>关键变化</b><p>手机端不只是“展示提醒”：它可以语音写入；Codex 不只是“读取资料”：它也会更新记忆；电脑上的 Spec 不是终点：它始终可以被人直接修正。</p></div>
+
+        <div className="memory-org">
+          <header><div><small>CONTEXT ORGANIZATION</small><h3>Agent 如何把散乱经历，整理成此刻可用的上下文</h3></div><p>基于 `memory.html` 的组织逻辑，调整为 WAKIE 的记忆层。</p></header>
+          <div className="org-columns"><span>技术与组织方式</span><span>带来的结果</span></div>
+          <div className="org-list">
+            <article><i>01</i><div><strong>Spec 真相统一</strong><small>后台整理关键事实，原始文档保持可编辑</small></div><b>→</b><p>上下文有稳定、可校正的来源</p></article>
+            <article><i>02</i><div><strong>混合检索</strong><small>关键词 / BM25 / 语义向量共同召回</small></div><b>→</b><p>既能理解意思，也不会丢掉原文细节</p></article>
+            <article><i>03</i><div><strong>情绪与遗忘曲线</strong><small>活跃度、重要度与情绪强度影响衰减</small></div><b>→</b><p>重要记忆保留更久，其余自然淡去</p></article>
+            <article><i>04</i><div><strong>权重池主动浮现</strong><small>未解决、高唤醒、临近时间的内容提高权重</small></div><b>→</b><p>闹钟和日程到来前，关键上下文主动回来</p></article>
+            <article><i>05</i><div><strong>Markdown 记忆桶</strong><small>YAML 元数据 + 可读原文 + 关联链接</small></div><b>→</b><p>用户可读、可改、可搜索、可迁移</p></article>
+            <article><i>06</i><div><strong>先落盘，再向量化</strong><small>写入与 embedding 解耦，后台完成索引</small></div><b>→</b><p>网络失败也不丢记忆，长期可靠运行</p></article>
+          </div>
         </div>
+      </section>
+
+      <section className="closing section" id="closing">
+        <div className="closing-time">02:45—03:00 · 最后只留一句</div>
+        <p>THE ONE-LINE PITCH</p>
+        <h2>一个以记忆 Agent 为核心，<br />让上下文优雅流入时间的产品。</h2>
+        <div className="final-values">
+          <span>更少重复解释</span><i>×</i><span>更快进入状态</span><i>×</i><span>更容易真正行动</span>
+        </div>
+        <div className="final-line"><span>CONTEXTUAL TO-DO</span><b>从“记得要做”到“帮你做到”</b><button onClick={() => go("answer")}>回到开场 ↑</button></div>
       </section>
     </main>
   );
+}
+
+function Phone({ mode, compact = false }: { mode: string; compact?: boolean }) {
+  return <div className={`phone ${compact ? "compact" : ""}`}>
+    <i className="island" />
+    {mode === "alarm" && <div className="phone-screen alarm-ui"><time>7:30</time><small>8月7日 · 星期五</small><div className="voice-orb"><i /><i /><i /><i /><i /></div><h4>早上好，Maro。</h4><p>先不用跑五公里。穿上鞋，下楼走两分钟。</p><button>我起来了 <span>→</span></button></div>}
+    {mode === "life" && <div className="phone-screen life-ui"><header><small>SATURDAY PLAN</small><b>···</b></header><h4>和小余出去玩</h4><p>已带入 8 条相关上下文</p><div className="mini-chat"><span>念</span><p>继续比较莫干山和安吉？我记得你们不想自驾。</p></div><div className="choice"><small>RECOMMEND</small><b>安吉 · 两天一夜</b><span>¥ 680 / 人</span></div><button>继续和 AI 讨论 <span>→</span></button></div>}
+    {mode === "work" && <div className="phone-screen work-ui"><header><small>CONTEXT READY</small><b>15:00</b></header><h4>Context OS 方向会</h4><div className="context-count"><strong>24</strong><span>条记忆<br />已准备</span></div><ul><li><i />产品 Spec.md</li><li><i />上次会议的 3 个决定</li><li><i />1 个未解决问题</li></ul><button>在 Codex 中继续 <span>↗</span></button><small className="share">或复制上下文链接</small></div>}
+  </div>;
 }
