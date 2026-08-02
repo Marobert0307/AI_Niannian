@@ -264,7 +264,7 @@ function ManagePage({ selectedDate, setSelectedDate, startContext, shareContext 
         {selectedDate === 7 && (
           <article className={`agenda-item alarm-item ${alarmOn ? "" : "alarm-disabled"}`}>
             <time>07:30</time><i className="type-line" />
-            <div className="item-copy"><div className="item-kind-row"><span className="type-tag alarm-tag">↻ 周期闹钟</span><button className={`alarm-power ${alarmOn ? "on" : ""}`} aria-label={alarmOn ? "关闭周期闹钟" : "开启周期闹钟"} onClick={() => setAlarmOn((value) => !value)}><i />{alarmOn ? "关闭" : "开启"}</button></div><strong>晨跑 5 公里</strong><small>每周一、三、五 · 铃声后由念念陪你起床</small></div>
+            <div className="item-copy"><div className="item-kind-row"><span className="type-tag alarm-tag">↻ 周期闹钟</span><button className={`alarm-power ${alarmOn ? "on" : ""}`} aria-label={alarmOn ? "关闭周期闹钟" : "开启周期闹钟"} aria-pressed={alarmOn} onClick={() => setAlarmOn((value) => !value)}><span className="power-track"><i /></span><em>{alarmOn ? "开启" : "关闭"}</em></button></div><strong>晨跑 5 公里</strong><small>每周一、三、五 · 铃声后由念念陪你起床</small></div>
             <div className="item-actions"><button onClick={() => startContext({ kind: "alarm", title: "晨跑 5 公里", detail: "你正在准备第一次半马。只要穿上鞋出门，就已经完成一半。" })}>念念</button><button onClick={() => shareContext("晨跑 5 公里")}>分享</button></div>
           </article>
         )}

@@ -43,3 +43,12 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# local preview and packaging artifacts
+/.sites-package-stage*/
+/.readme-push-*/
+/.full-push-*/
+/.full-project-export.tar
+/.wakie-*.log
+/.wakie-*.err.log
+/wakie-*.tar.gz
